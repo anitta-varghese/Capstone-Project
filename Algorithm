@@ -1,0 +1,74 @@
+#Algorithm for Calculating "Equity Risk Charge Under FRTB Standardized Approach"
+#STEP 1
+# import pandas and numpy libraries
+# input instruments data - including instruments ,strike price,positions,units,maket cap, economy,sector 
+# input risk factor data- risk Id , risk factor
+# input risk bucketlist data - risk bucket no.,market cap, economy, sector, risk weight,correlation
+
+#step 2
+# Instrument-to-Risk Factor Sensitivities - assigning each instrument to corresponding risk factor k
+
+#step 3
+#Risk Factor Bucketing - mapping each risk factor to a specific bucket based on criteria like:
+#   Market Capitalization (Large/Small)
+#   Economy Type (Advanced/Emerging)
+#   Sector (Technology, Financials, Consumer Goods, etc)
+#Look up the corresponding Risk Weight (RW_k)
+
+#step 4
+#calculate net sensitivity of each factor k (sk)
+#Calculate Weighted Net Sensitivity (WSK):For each risk factor k
+#Calculate its Weighted Net Sensitivity (WSK) by multiplying its Net Sensitivity (SK) by its Risk Weight (RW_k).
+#    WSK_k = SK_k * RW_k
+
+#step 5
+#Intra bucket correlation (within the bucket) - Calculate Intra-Bucket Capital Charge (K_b) for Each Scenario
+#Baseline: ρkl scenario = ρkl (the base correlation from the parameters table).
+#      High: ρkl scenario = min(100%, 1.25 * ρkl) (increase base correlation by 25%, capped at 100%).
+#      Low: ρkl scenario = max(ρkl*2-100%,0.75 *ρkl)
+
+
+#step 6
+#Identify all the WSK values for risk factors belonging to the bucket b.
+#Aggregate within Each Bucket: For each bucket b: if b≠11
+#Calculate the sum of squares: Sum_WSK_sq = Sum(WSK_k^2) for all k in bucket b.
+#Calculate the sum of cross-products: Sum_Cross = Sum(ρkl_scenario * WSK_k * WSK_l) for all distinct pairs k, l in bucket b.
+#Calculate the term inside the square root: Term_Inside_Sqrt = Sum_WSK^2 + 2 * Sum_Cross.
+
+#step 7
+#If Bucket b == 11 OR Term_Inside_Sqrt < 0 (negative):
+#Use the alternative formula: sb = max(min(|WSK_k|k_b) -k_b) (sum of absolute weighted sensitivities in the bucket).
+#Else (Standard Case): K_b = sqrt(max(0, Term_Inside_Sqrt)) (take the square root, ensuring the result is not from a negative number due to potential floating point issues)
+
+#step 8
+#Calculate Sum of Weighted Sensitivities per Bucket (S_b):
+#For each bucket b:Calculate S_b by simply summing all the WSK values within that bucket.
+#S_b = Sum(WSK_k) for all k in bucket b.
+
+
+#step 9
+#Calculate Total Delta Capital (K_Delta) for Each Scenario:
+#For each scenario (Baseline, High, Low), using the K_b values from step 7 and S_b values from step 8:
+#Calculate the sum of squares of bucket charges: Sum_Kb_sq = Sum(K_b^2) across all buckets b.
+
+#step 10
+#Calculate the sum of inter-bucket cross-terms: Sum_Cross_Bucket = Sum(γbc * S_b * S_c) for all distinct pairs of buckets b, c (using the inter-bucket correlations gamma_bc).
+#Calculate the term inside the final square root: Term_Inside_Sqrt_Total = Sum_Kb_^2 * Sum_Cross_Bucket.
+#or Calculate the term inside the final square root: Term_Inside_Sqrt_Total=Sum_Kb_^2*Sum_sb_^2*Sum(γbc * S_b * S_c)- Sum_sb_^2
+
+#step 11
+#Calculate the total Delta Capital for the scenario: K_Delta_scenario = sqrt(max(0, Term_Inside_Sqrt_Total))
+
+#step 12
+#Determine Final Delta Risk Charge:
+#The final FRTB Standardized Approach Equity Delta Risk Charge is the maximum value of K_Delta obtained across the three scenarios(Baseline, High, Low).
+#Inter bucket correlation ( between different buckets)
+#Final Delta Charge = MAX(K_Delta_Baseline, K_Delta_High, K_Delta_Low)
+#Baseline: ρkl scenario = γbc (the base correlation from the parameters table).
+#      High: ρkl scenario = min(100%, 1.25 * γbc ) (increase base correlation by 25%, capped at 100%).
+#      Low: ρkl scenario = max(γbc *2-100%,0.75 *γbc )
+
+#outcome
+#capital charge in 3 scenarios( baseline,high,low)
+#pick the highest capital charge
+
